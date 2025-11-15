@@ -25,19 +25,6 @@ public:
     };
 
     rbNode* rbRoot = nullptr;
-    
-    bool hasRedRed(rbNode* node) const
-    {
-        if(!node) return false;
-
-        if(node->color == RED)
-        {
-            if((node->left && node->left->color == RED)  ||
-                (node->right && node->right->color == RED))
-                return true;
-        }
-        return hasRedRed(node->left) || hasRedRed(node->right);
-    }
 
     void leftRotate(rbNode* x)
     {
@@ -154,7 +141,6 @@ public:
     rbNode* find(int key) const
     {
         rbNode* x = rbRoot;
-        if(key == x->key) { return x;}
         while(x && x->key != key)
         {
             if(key < x->key) { x = x->left;}
@@ -171,52 +157,58 @@ public:
     void delete_node(int key)
     {
         rbNode* z = find(key);
-        if(!z) return;
+        if (!z) return;
 
         rbNode* y = z;
-        Color yColor = y->color;
         rbNode* x = nullptr;
-        
-        if(z->left == nullptr)
+        Color yColor = y->color;
+
+        // Case 1: z has no left child
+        if (z->left == nullptr)
         {
             x = z->right;
             transplant(z, z->right);
         }
-        else if(z->right == nullptr)
+        // Case 2: z has no right child
+        else if (z->right == nullptr)
         {
             x = z->left;
             transplant(z, z->left);
         }
+        // Case 3: two children
         else
         {
             y = min_node(z->right);
             yColor = y->color;
             x = y->right;
-            
-            if(y->parent == z)
+
+            if (y->parent == z)
             {
-                if(x) { x->parent = y;}
+                if (x) x->parent = y;
             }
             else
             {
                 transplant(y, y->right);
                 y->right = z->right;
-                y->right->parent = y; 
+                y->right->parent = y;
             }
+
             transplant(z, y);
             y->left = z->left;
             y->left->parent = y;
-            yColor = z->color;
+
+            y->color = z->color;
         }
+
         delete z;
-        if(yColor == BLACK)
-        {
+
+        if (yColor == BLACK)
             fixDelete(x);
-        }
     }
 
+
     void fixDelete(rbNode* x)
-{
+    {
     while (x != rbRoot && (!x || x->color == BLACK))
     {
         rbNode* p = x ? x->parent : nullptr;
@@ -278,5 +270,16 @@ public:
     }
 
     if (x) x->color = BLACK;
-}
+    }
+    void destroy(rbNode* node)
+    {
+        if (!node) return;
+        destroy(node->left);
+        destroy(node->right);
+        delete node;
+    }
+    ~rbTree()
+    {
+        destroy(rbRoot);
+    }    
 };
